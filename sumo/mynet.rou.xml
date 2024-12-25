@@ -19,8 +19,8 @@
     </vTypeDistribution>
     <!-- Routes -->
     <route id="highway" edges="in 2to3 out"/>
-    <route id="ramp" edges="E3 E4 2to3 out"/>
+    <route id="ramp" edges="intramp outramp 2to3 out"/>
     <!-- Vehicles, persons and containers (sorted by depart) -->
     <flow id="highway" begin="0.00" arrivalLane="random" from="in" to="out" via="2to3" type="car_colors" end="500.00" number="300"/>
-    <flow id="ramp" begin="0.00" arrivalLane="random" from="E3" to="out" via="2to3" type="car_colors" end="500.00" number="20"/>
+    <flow id="ramp" begin="0.00" arrivalLane="random" from="intramp" to="out" via="2to3" type="car_colors" end="500.00" number="20"/>
 </routes>

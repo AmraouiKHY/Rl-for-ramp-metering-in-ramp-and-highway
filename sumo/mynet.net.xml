@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- generated on 2024-12-25 15:37:58 by Eclipse SUMO netedit Version 1.21.0
+<!-- generated on 2024-12-25 21:18:52 by Eclipse SUMO netedit Version 1.21.0
 <neteditConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/neteditConfiguration.xsd">
 
     <input>
@@ -56,21 +56,21 @@
         <lane id="2to3_1" index="1" speed="13.89" length="46.31" shape="-30.98,5.09 15.33,5.09"/>
         <lane id="2to3_2" index="2" speed="13.89" length="46.31" shape="-30.98,8.29 15.33,8.29"/>
     </edge>
-    <edge id="E3" from="node5" to="node6" priority="-1">
-        <lane id="E3_0" index="0" speed="13.89" length="29.61" shape="-65.18,-24.04 -40.97,-6.99"/>
-    </edge>
-    <edge id="E4" from="node6" to="node2" priority="-1">
-        <lane id="E4_0" index="0" speed="13.89" length="5.65" shape="-40.66,-6.70 -37.08,-2.33"/>
-    </edge>
     <edge id="in" from="node1" to="node2" priority="-1">
         <lane id="in_0" index="0" speed="13.89" length="32.51" shape="-71.55,1.16 -39.04,1.72"/>
         <lane id="in_1" index="1" speed="13.89" length="32.51" shape="-71.60,4.36 -39.10,4.92"/>
         <lane id="in_2" index="2" speed="13.89" length="32.51" shape="-71.66,7.56 -39.16,8.12"/>
     </edge>
+    <edge id="intramp" from="node5" to="node6" priority="-1">
+        <lane id="intramp_0" index="0" speed="13.89" length="29.61" shape="-65.18,-24.04 -40.97,-6.99"/>
+    </edge>
     <edge id="out" from="node3" to="node4" priority="-1">
         <lane id="out_0" index="0" speed="13.89" length="49.23" shape="15.65,1.90 64.88,2.11"/>
         <lane id="out_1" index="1" speed="13.89" length="49.23" shape="15.63,5.10 64.86,5.31"/>
         <lane id="out_2" index="2" speed="13.89" length="49.23" shape="15.62,8.30 64.85,8.51"/>
+    </edge>
+    <edge id="outramp" from="node6" to="node2" priority="-1">
+        <lane id="outramp_0" index="0" speed="13.89" length="5.65" shape="-40.66,-6.70 -37.08,-2.33"/>
     </edge>
 
     <tlLogic id="node6" type="static" programID="0" offset="0">
@@ -80,7 +80,7 @@
     </tlLogic>
 
     <junction id="node1" type="dead_end" x="-71.68" y="9.16" incLanes="" intLanes="" shape="-71.68,9.16 -71.52,-0.44"/>
-    <junction id="node2" type="priority" x="-29.16" y="9.89" incLanes="E4_0 in_0 in_1 in_2" intLanes=":node2_0_0 :node2_1_0 :node2_1_1 :node2_1_2" shape="-30.98,9.89 -30.98,0.29 -32.36,-0.11 -33.14,-0.61 -33.98,-1.32 -34.88,-2.23 -35.84,-3.34 -38.32,-1.31 -37.86,-0.50 -37.89,-0.22 -38.10,-0.02 -38.47,0.09 -39.02,0.12 -39.18,9.72">
+    <junction id="node2" type="priority" x="-29.16" y="9.89" incLanes="outramp_0 in_0 in_1 in_2" intLanes=":node2_0_0 :node2_1_0 :node2_1_1 :node2_1_2" shape="-30.98,9.89 -30.98,0.29 -32.36,-0.11 -33.14,-0.61 -33.98,-1.32 -34.88,-2.23 -35.84,-3.34 -38.32,-1.31 -37.86,-0.50 -37.89,-0.22 -38.10,-0.02 -38.47,0.09 -39.02,0.12 -39.18,9.72">
         <request index="0" response="1110" foes="1110" cont="0"/>
         <request index="1" response="0000" foes="0001" cont="0"/>
         <request index="2" response="0000" foes="0001" cont="0"/>
@@ -93,18 +93,18 @@
     </junction>
     <junction id="node4" type="dead_end" x="64.84" y="10.11" incLanes="out_0 out_1 out_2" intLanes="" shape="64.88,0.51 64.84,10.11"/>
     <junction id="node5" type="dead_end" x="-66.11" y="-22.74" incLanes="" intLanes="" shape="-66.11,-22.74 -64.26,-25.35"/>
-    <junction id="node6" type="traffic_light" x="-41.89" y="-5.68" incLanes="E3_0" intLanes=":node6_0_0" shape="-41.89,-5.68 -39.42,-7.71 -39.63,-7.96 -39.70,-8.04 -39.79,-8.11 -39.90,-8.19 -40.05,-8.30">
+    <junction id="node6" type="traffic_light" x="-41.89" y="-5.68" incLanes="intramp_0" intLanes=":node6_0_0" shape="-41.89,-5.68 -39.42,-7.71 -39.63,-7.96 -39.70,-8.04 -39.79,-8.11 -39.90,-8.19 -40.05,-8.30">
         <request index="0" response="0" foes="0" cont="0"/>
     </junction>
 
     <connection from="2to3" to="out" fromLane="0" toLane="0" via=":node3_0_0" dir="s" state="M"/>
     <connection from="2to3" to="out" fromLane="1" toLane="1" via=":node3_0_1" dir="s" state="M"/>
     <connection from="2to3" to="out" fromLane="2" toLane="2" via=":node3_0_2" dir="s" state="M"/>
-    <connection from="E3" to="E4" fromLane="0" toLane="0" via=":node6_0_0" tl="node6" linkIndex="0" dir="s" state="O"/>
-    <connection from="E4" to="2to3" fromLane="0" toLane="0" via=":node2_0_0" dir="r" state="m"/>
     <connection from="in" to="2to3" fromLane="0" toLane="0" via=":node2_1_0" dir="s" state="M"/>
     <connection from="in" to="2to3" fromLane="1" toLane="1" via=":node2_1_1" dir="s" state="M"/>
     <connection from="in" to="2to3" fromLane="2" toLane="2" via=":node2_1_2" dir="s" state="M"/>
+    <connection from="intramp" to="outramp" fromLane="0" toLane="0" via=":node6_0_0" tl="node6" linkIndex="0" dir="s" state="O"/>
+    <connection from="outramp" to="2to3" fromLane="0" toLane="0" via=":node2_0_0" dir="r" state="m"/>
 
     <connection from=":node2_0" to="2to3" fromLane="0" toLane="0" dir="r" state="M"/>
     <connection from=":node2_1" to="2to3" fromLane="0" toLane="0" dir="s" state="M"/>
@@ -113,6 +113,6 @@
     <connection from=":node3_0" to="out" fromLane="0" toLane="0" dir="s" state="M"/>
     <connection from=":node3_0" to="out" fromLane="1" toLane="1" dir="s" state="M"/>
     <connection from=":node3_0" to="out" fromLane="2" toLane="2" dir="s" state="M"/>
-    <connection from=":node6_0" to="E4" fromLane="0" toLane="0" dir="s" state="M"/>
+    <connection from=":node6_0" to="outramp" fromLane="0" toLane="0" dir="s" state="M"/>
 
 </net>
