@@ -1,110 +1,99 @@
 import os
 import sys
 import numpy as np
-import traci
+from pathlib import Path
+import matplotlib.pyplot as plt
 
-# Add SUMO_HOME to path
 if 'SUMO_HOME' in os.environ:
     tools = os.path.join(os.environ['SUMO_HOME'], 'tools')
     sys.path.append(tools)
 else:
-    sys.exit("Please declare SUMO_HOME")
+    sys.exit("SUMO_HOME not found")
+
+import traci
 
 class RampMeteringEnv:
-    def __init__(self):
-        # State space: discretized density levels for mainline and ramp
-        self.n_density_levels = 10
-        self.n_states = self.n_density_levels * self.n_density_levels  # mainline × ramp
+    def __init__(self, use_traffic_light=True):
+        self.cfg_path = str(Path("D:/3CS/RL/rl for ramp metering/sumo/mynet.sumocfg"))
+        self.sumoCmd = ["sumo", "-c", self.cfg_path, "--no-step-log", "--no-warnings"]
+        self.use_traffic_light = use_traffic_light
         
-        # Action space: different traffic light phase durations
-        self.actions = [5, 10, 15, 20]  # seconds for green phase
-        self.n_actions = len(self.actions)
+        # Fixed lengths from SUMO network
+        self.highway_length = 1000  # meters
+        self.ramp_length = 100      # meters
         
-        # Initialize Q-table
-        self.q_table = np.zeros((self.n_states, self.n_actions))
+        # Normalization constants
+        self.MAX_DENSITY = 20.0
+        self.MAX_QUEUE = 10.0
+        self.MAX_SPEED = 13.89
+        self.MAX_WAIT_TIME = 300.0
         
-        # Traffic light ID
+        # Q-learning parameters
+        self.n_states = 4
+        self.n_actions = 4
+        self.q_table = {}
+        
+        # Network elements
+        self.highway = "2to3"
+        self.ramp = "intramp"
         self.tl_id = "node6"
-        
-        # Edge IDs for measurement
-        self.mainline_edge = "2to3"
-        self.ramp_edge = "intramp"
+
+    def start_simulation(self):
+        try:
+            traci.start(self.sumoCmd)
+            return True
+        except Exception as e:
+            print(f"Error: {e}")
+            return False
 
     def get_state(self):
-        # Get vehicle counts/density
-        mainline_density = traci.edge.getLastStepVehicleNumber(self.mainline_edge) / traci.edge.getLength(self.mainline_edge)
-        ramp_density = traci.edge.getLastStepVehicleNumber(self.ramp_edge) / traci.edge.getLength(self.ramp_edge)
+        # Highway metrics (using fixed length)
+        highway_density = traci.edge.getLastStepVehicleNumber(self.highway) / (self.highway_length/1000)
+        highway_speed = traci.edge.getLastStepMeanSpeed(self.highway)
         
-        # Discretize densities
-        mainline_state = min(int(mainline_density * 10), self.n_density_levels - 1)
-        ramp_state = min(int(ramp_density * 10), self.n_density_levels - 1)
+        # Ramp metrics
+        ramp_queue = traci.edge.getLastStepHaltingNumber(self.ramp)
+        ramp_speed = traci.edge.getLastStepMeanSpeed(self.ramp)
         
-        return mainline_state * self.n_density_levels + ramp_state
+        # Normalize values
+        norm_density = min(highway_density / self.MAX_DENSITY, 1.0)
+        norm_queue = min(ramp_queue / self.MAX_QUEUE, 1.0)
+        norm_highway_speed = min(highway_speed / self.MAX_SPEED, 1.0)
+        norm_ramp_speed = min(ramp_speed / self.MAX_SPEED, 1.0)
+        
+        return tuple([norm_density, norm_queue, norm_highway_speed, norm_ramp_speed])
+
+    def get_q_value(self, state, action=None):
+        if state not in self.q_table:
+            self.q_table[state] = np.zeros(self.n_actions)
+        if action is None:
+            return self.q_table[state]
+        return self.q_table[state][action]
 
     def take_action(self, action):
-        # Set traffic light phase duration
-        phase_duration = self.actions[action]
-        traci.trafficlight.setPhaseDuration(self.tl_id, phase_duration)
-        
-        # Run simulation for the action duration
-        for _ in range(phase_duration):
+        if not self.use_traffic_light:
             traci.simulationStep()
-        
-        # Calculate reward (negative of total waiting time)
-        mainline_wait = traci.edge.getWaitingTime(self.mainline_edge)
-        ramp_wait = traci.edge.getWaitingTime(self.ramp_edge)
-        reward = -(mainline_wait + ramp_wait)
-        
-        # Get new state
-        next_state = self.get_state()
-        
-        # Check if simulation is done
-        done = traci.simulation.getMinExpectedNumber() <= 0
-        
-        return next_state, reward, done
-
-def train():
-    # Hyperparameters
-    alpha = 0.1
-    gamma = 0.99
-    epsilon = 1.0
-    epsilon_decay = 0.995
-    min_epsilon = 0.01
-    episodes = 100
-
-    env = RampMeteringEnv()
-    
-    for episode in range(episodes):
-        # Start SUMO for this episode
-        traci.start(["sumo", "-c", "mynet.sumocfg"])
-        
-        state = env.get_state()
-        done = False
-        
-        while not done:
-            # Epsilon-greedy action selection
-            if np.random.rand() < epsilon:
-                action = np.random.randint(env.n_actions)
-            else:
-                action = np.argmax(env.q_table[state])
+            return self.get_state(), self.calculate_reward(), False
             
-            # Take action and observe result
-            next_state, reward, done = env.take_action(action)
+        green_times = [5, 10, 15, 20]
+        try:
+            traci.trafficlight.setPhaseDuration(self.tl_id, green_times[action])
             
-            # Update Q-value
-            best_next_action = np.argmax(env.q_table[next_state])
-            td_target = reward + gamma * env.q_table[next_state, best_next_action] * (1 - done)
-            env.q_table[state, action] += alpha * (td_target - env.q_table[state, action])
+            # Simulate for green time duration
+            for _ in range(green_times[action]):
+                if traci.simulation.getMinExpectedNumber() <= 0:
+                    return self.get_state(), 0, True
+                traci.simulationStep()
             
-            state = next_state
-        
-        # Close SUMO
-        traci.close()
-        
-        # Decay epsilon
-        epsilon = max(min_epsilon, epsilon * epsilon_decay)
-        
-        print(f"Episode {episode + 1}/{episodes} completed")
+            return self.get_state(), self.calculate_reward(), False
+        except:
+            return self.get_state(), 0, True
 
-if __name__ == "__main__":
-    train()
+    def calculate_reward(self):
+        waiting_time = (traci.edge.getWaitingTime(self.highway) + 
+                     traci.edge.getWaitingTime(self.ramp))
+        
+        vehicles = (traci.edge.getLastStepVehicleNumber(self.highway) + 
+                   traci.edge.getLastStepVehicleNumber(self.ramp))
+        
+        return (-waiting_time + vehicles * 10)
