@@ -37,24 +37,14 @@ class RampMeteringEnv:
         self.highway = "2to3"
         self.ramp = "intramp"
         self.tl_id = "node6"
-        self.is_connected = False
 
     def start_simulation(self):
         try:
-            if self.is_connected:
-                traci.close()
             traci.start(self.sumoCmd)
-            self.is_connected = True
             return True
         except Exception as e:
-            print(f"Failed to start SUMO: {e}")
-            self.is_connected = False
+            print(f"Error: {e}")
             return False
-
-    def close(self):
-        if self.is_connected:
-            traci.close()
-            self.is_connected = False
 
     def get_state(self):
         # Highway metrics (using fixed length)
@@ -82,9 +72,23 @@ class RampMeteringEnv:
 
     def take_action(self, action):
         if not self.use_traffic_light:
-            traci.simulationStep()
-            return self.get_state(), self.calculate_reward(), False
-            
+            inflow_rates = [0.2, 0.5, 1.0, 2.0]  # vehicles/second
+            inflow_rate = inflow_rates[action]
+            try:
+                # Control ramp inflow by adding vehicles at a controlled rate
+                traci.edge.adaptTraveltime(self.ramp, 1 / inflow_rate)  # Adjust travel time to simulate metering
+
+                # Simulate for a fixed number of steps (e.g., 10 seconds)
+                for _ in range(10):
+                    if traci.simulation.getMinExpectedNumber() <= 0:
+                        return self.get_state(), 0, True
+                    traci.simulationStep()
+
+                return self.get_state(), self.calculate_reward(), False
+            except Exception as e:
+                print(f"Error during action execution: {e}")
+                return self.get_state(), 0, True
+           
         green_times = [5, 10, 15, 20]
         try:
             traci.trafficlight.setPhaseDuration(self.tl_id, green_times[action])
