@@ -37,14 +37,24 @@ class RampMeteringEnv:
         self.highway = "2to3"
         self.ramp = "intramp"
         self.tl_id = "node6"
+        self.is_connected = False
 
     def start_simulation(self):
         try:
+            if self.is_connected:
+                traci.close()
             traci.start(self.sumoCmd)
+            self.is_connected = True
             return True
         except Exception as e:
-            print(f"Error: {e}")
+            print(f"Failed to start SUMO: {e}")
+            self.is_connected = False
             return False
+
+    def close(self):
+        if self.is_connected:
+            traci.close()
+            self.is_connected = False
 
     def get_state(self):
         # Highway metrics (using fixed length)
